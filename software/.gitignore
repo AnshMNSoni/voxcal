@@ -1,0 +1,6 @@
+# Environment variables
+.env
+
+# Local shared files
+local_files/*
+!local_files/.gitkeep
