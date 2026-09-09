@@ -2,11 +2,11 @@
 
 <div align="center">
 
-[![ESP32](https://img.shields.io/badge/Hardware-ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
-[![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B%20%2F%20Arduino-00979D?style=for-the-badge&logo=arduino&logoColor=white)](https://www.arduino.cc/)
-[![Gateway](https://img.shields.io/badge/Gateway-FastAPI%20%7C%20Python%203.10%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Automation](https://img.shields.io/badge/Agent-n8n%20Workflow-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io/)
-[![LLM Reasoning](https://img.shields.io/badge/LLM-Gemini%20API%20%7C%20Groq%20API-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![ESP32](https://img.shields.io/badge/Hardware-ESP32-E7352C?style=for-the-badge)](https://www.espressif.com/)
+[![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B%20%2F%20Arduino-00979D?style=for-the-badge)](https://www.arduino.cc/)
+[![Gateway](https://img.shields.io/badge/Gateway-FastAPI%20%7C%20Python%203.10%2B-009688?style=for-the-badge)](https://fastapi.tiangolo.com/)
+[![Automation](https://img.shields.io/badge/Agent-n8n%20Workflow-EA4B71?style=for-the-badge)](https://n8n.io/)
+[![LLM Reasoning](https://img.shields.io/badge/LLM-Gemini%20API%20%7C%20Groq%20API-4285F4?style=for-the-badge)](https://ai.google.dev/)
 [![Framework](https://img.shields.io/badge/Architecture-ReAct%20Framework-7C3AED?style=for-the-badge)](https://arxiv.org/abs/2210.03629)
 [![Protocol](https://img.shields.io/badge/Protocol-WebSocket%20%26%20REST-2563EB?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 [![Testing Status](https://img.shields.io/badge/Status-Unit%20Tested%20%26%20Verified-22C55E?style=for-the-badge)](https://github.com/AnshMNSoni/voxcal)
@@ -45,17 +45,12 @@
 
 - **Voice & Hardware Driven**: Edge capture via I2S microphone, audio processing on ESP32, and speech feedback through an amplifier and speaker.
 - **Robust WebSocket Pipeline**: Bi-directional, persistent connection between the ESP32 and a local FastAPI Gateway for real-time streaming and fast responses.
-- **Autonomous ReAct Agent**: Employs reasoning and acting (Thought ➔ Action ➔ Observation) loops in n8n to parse natural language, resolve relative times ("tomorrow at 3 PM"), and invoke calendar tools dynamically.
+- **Autonomous ReAct Agent**: Employs reasoning and acting (Thought -> Action -> Observation) loops in n8n to parse natural language, resolve relative times ("tomorrow at 3 PM"), and invoke calendar tools dynamically.
 - **Complete Calendar CRUD**: Autonomous tools to **Create**, **Read/Query**, **Update**, and **Delete** tasks and calendar events.
-- **Privacy & Security First**: Credentials are kept in `.gitignore`'d `secrets.h` and `.env` files, keeping your network credentials safe.
 
 ---
 
 ## System Architecture
-
-<div align="center">
-
-</div>
 
 ```mermaid
 flowchart TD
@@ -133,7 +128,7 @@ sequenceDiagram
     
     Note over ESP,Spk: Upcoming Audio Pipeline
     ESP->>Spk: Audio Stream (I2S) / TTS Output
-    Spk->>User: 📢 "I've scheduled Team Sync for tomorrow at 10:00 AM."
+    Spk->>User: "I've scheduled Team Sync for tomorrow at 10:00 AM."
 ```
 
 ---
@@ -144,13 +139,13 @@ All modular subsystems have been tested independently and validated through a mu
 
 | Subsystem / Module | Scope & Tested Features | Verification Status | Notes |
 |:---|:---|:---:|:---|
-| **n8n Agentic Module** | • ReAct reasoning loop with Gemini API & Groq API<br>• Calendar **Create** event tool<br>• Calendar **Read / Query** events tool<br>• Calendar **Update** event tool<br>• Calendar **Delete** event tool | ✅ **Tested & Working** | Successfully executes CRUD operations against real calendar APIs with accurate parameter extraction. |
-| **ESP32 Hardware Module** | • Wi-Fi connection and automatic reconnect loop<br>• Persistent WebSocket client lifecycle (`WebSocketsClient`)<br>• JSON serialization & deserialization (`ArduinoJson`)<br>• Text payload transmission without audio/speaker | ✅ **Tested & Working** | Validated on physical ESP32 hardware using secure `secrets.h` configuration. |
-| **FastAPI Gateway Module** | • Async WebSocket-to-HTTP message forwarder<br>• Client connection tracking & disconnection handling<br>• Resilient 240s HTTP timeout for long-running LLM reasoning<br>• Bi-directional routing from n8n response back to ESP32 | ✅ **Tested & Working** | Validated on `0.0.0.0:8000/ws` via local network and mobile hotspot routing. |
-| **Partial End-to-End Pipeline** | • Serial Monitor input on ESP32 ➔ Gateway WebSocket ➔ n8n Webhook ➔ ReAct Agent execution ➔ Gateway ➔ ESP32 ➔ Serial Monitor display | ✅ **Tested & Working** | Verified complete round-trip flow without audio hardware in the loop. |
-| **Speaker & Amplifier Module** | • I2S digital-to-analog audio output (MAX98357A)<br>• Text-to-Speech (TTS) audio decoding and playback on ESP32 | ⏳ **Pending / Next Up** | Hardware wiring and I2S DAC integration phase. |
-| **Microphone & STT Module** | • I2S microphone (INMP441) audio sampling<br>• Wake-word detection & streaming Speech-to-Text (STT) pipeline | ⏳ **Pending / Next Up** | Hardware wiring and speech recognition phase. |
-| **Full Voice End-to-End Flow** | • Spoken Audio ➔ Mic/STT ➔ ESP32 ➔ Gateway ➔ n8n ReAct Agent ➔ Calendar Tool ➔ Gateway ➔ ESP32 ➔ Amplifier/Speaker Audio Output | ⏳ **Pending / Next Up** | Final unified milestone combining all hardware and software modules. |
+| **n8n Agentic Module** | - ReAct reasoning loop with Gemini API & Groq API<br>- Calendar **Create** event tool<br>- Calendar **Read / Query** events tool<br>- Calendar **Update** event tool<br>- Calendar **Delete** event tool | **Tested & Working** | Successfully executes CRUD operations against real calendar APIs with accurate parameter extraction. |
+| **ESP32 Hardware Module** | - Wi-Fi connection and automatic reconnect loop<br>- Persistent WebSocket client lifecycle (`WebSocketsClient`)<br>- JSON serialization & deserialization (`ArduinoJson`)<br>- Text payload transmission without audio/speaker | **Tested & Working** | Validated on physical ESP32 hardware using secure `secrets.h` configuration. |
+| **FastAPI Gateway Module** | - Async WebSocket-to-HTTP message forwarder<br>- Client connection tracking & disconnection handling<br>- Resilient 240s HTTP timeout for long-running LLM reasoning<br>- Bi-directional routing from n8n response back to ESP32 | **Tested & Working** | Validated on `0.0.0.0:8000/ws` via local network and mobile hotspot routing. |
+| **Partial End-to-End Pipeline** | - Serial Monitor input on ESP32 -> Gateway WebSocket -> n8n Webhook -> ReAct Agent execution -> Gateway -> ESP32 -> Serial Monitor display | **Tested & Working** | Verified complete round-trip flow without audio hardware in the loop. |
+| **Speaker & Amplifier Module** | - I2S digital-to-analog audio output (MAX98357A)<br>- Text-to-Speech (TTS) audio decoding and playback on ESP32 | **Pending / Next Up** | Hardware wiring and I2S DAC integration phase. |
+| **Microphone & STT Module** | - I2S microphone (INMP441) audio sampling<br>- Wake-word detection & streaming Speech-to-Text (STT) pipeline | **Pending / Next Up** | Hardware wiring and speech recognition phase. |
+| **Full Voice End-to-End Flow** | - Spoken Audio -> Mic/STT -> ESP32 -> Gateway -> n8n ReAct Agent -> Calendar Tool -> Gateway -> ESP32 -> Amplifier/Speaker Audio Output | **Pending / Next Up** | Final unified milestone combining all hardware and software modules. |
 
 ---
 
@@ -160,7 +155,7 @@ Below is the workflow structure orchestrating the incoming Webhook trigger, ReAc
 
 <div align="center">
 
-![VoxCal n8n Agentic Workflow Canvas](docs/assets/n8n-workflow-placeholder.svg)
+![VoxCal n8n Agentic Workflow Canvas](docs/assets/workflow.png)
 
 *(Export your n8n workflow canvas screenshot and save it as `docs/assets/n8n-workflow.png` to replace the placeholder above)*
 
