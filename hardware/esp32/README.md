@@ -12,17 +12,27 @@ In the Arduino IDE Library Manager (`Ctrl+Shift+I` or **Sketch -> Include Librar
 
 ## Configuration
 
-Open `esp32.ino` and update the configuration variables at the top of the file:
+1. Copy `secrets.h.example` to `secrets.h` (or `.env.example` to `.env`):
+   ```bash
+   cp secrets.h.example secrets.h
+   # or copy .env.example to .env
+   cp .env.example .env
+   ```
 
-```cpp
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+2. Open `secrets.h` and update your Wi-Fi credentials:
+   ```cpp
+   const char* WIFI_SSID     = "YOUR_WIFI_SSID";
+   const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+   ```
+   > **Note:** `secrets.h` and `.env` are listed in `.gitignore` so your private credentials will not be committed to GitHub.
 
-// Replace with the IPv4 address of your computer running the Gateway
-const char* GATEWAY_HOST  = "192.168.1.xxx"; 
-const uint16_t GATEWAY_PORT = 8000;
-const char* GATEWAY_PATH  = "/ws";
-```
+3. In `main.ino`, update the Gateway configuration if needed:
+   ```cpp
+   // Replace with the IPv4 address of your computer running the Gateway
+   const char* GATEWAY_HOST  = "192.168.1.xxx"; 
+   const uint16_t GATEWAY_PORT = 8000;
+   const char* GATEWAY_PATH  = "/ws";
+   ```
 
 > **Note:** Do NOT use `localhost` or `127.0.0.1`. Use your computer's local network IP (run `ipconfig` in PowerShell to find it).
 
