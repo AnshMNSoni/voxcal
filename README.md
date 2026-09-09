@@ -27,6 +27,7 @@
 - [Sequence Diagram (Create Event Flow)](#sequence-diagram-create-event-flow)
 - [Unit Testing & Verification Status](#unit-testing--verification-status)
 - [n8n Agentic Workflow Canvas](#n8n-agentic-workflow-canvas)
+- [n8n Step-by-Step Configuration](#n8n-step-by-step-configuration)
 - [Repository Structure](#repository-structure)
 - [Quick Start Guide](#quick-start-guide)
   - [1. Launch n8n Workflow Engine](#1-launch-n8n-workflow-engine)
@@ -157,8 +158,6 @@ Below is the workflow structure orchestrating the incoming Webhook trigger, ReAc
 
 ![VoxCal n8n Agentic Workflow Canvas](docs/assets/workflow.png)
 
-*(Export your n8n workflow canvas screenshot and save it as `docs/assets/n8n-workflow.png` to replace the placeholder above)*
-
 </div>
 
 > [!TIP]
@@ -167,6 +166,76 @@ Below is the workflow structure orchestrating the incoming Webhook trigger, ReAc
 > 2. **AI Agent (ReAct)**: Configured with Gemini 1.5 Flash/Pro or Groq LLaMA 3.3 70B as the reasoning brain.
 > 3. **Calendar Tools**: Custom tool nodes configured for Create Event, Search Events, Update Event, and Delete Event.
 > 4. **Respond to Webhook**: Emits formatted JSON containing the response text back to the Gateway.
+
+---
+
+## n8n Step-by-Step Configuration
+
+To set up the n8n ReAct Agent workflow, the agent requires precise prompt engineering and tool parameter definitions. Dedicated documentation for each component is available in the [`docs/n8n-setup/`](docs/n8n-setup/) directory:
+
+### 1. User Message Template
+The User Message Template formats incoming payloads from the ESP32, dynamically injecting the authoritative date, timestamp, and timezone.
+- Full Guide: [`docs/n8n-setup/user-prompt.md`](docs/n8n-setup/user-prompt.md)
+
+```text
+CURRENT DATE: {{ $json.current_date }}
+CURRENT DATE AND TIME: {{ $json.current_datetime }}
+TIMEZONE: {{ $json.timezone }}
+
+USER REQUEST:
+{{ $json.body.message }}
+```
+
+### 2. System Prompt
+The System Prompt enforces VoxCal's operational whitelist, relative date arithmetic rules, calendar integrity invariants, and spoken-response constraints.
+- Full Guide: [`docs/n8n-setup/system-prompt.md`](docs/n8n-setup/system-prompt.md)
+
+```text
+You are VoxCal, a voice-controlled Google Calendar assistant.
+
+You can perform only these operations:
+
+1. Create a calendar event.
+2. Update a calendar event.
+3. Delete a calendar event.
+4. Search calendar events for a particular date.
+
+Use the available Google Calendar tools whenever the user requests a calendar operation.
+
+DATE AND TIME RULES:
+
+- The user request will provide CURRENT DATE, CURRENT DATE AND TIME, and TIMEZONE.
+- These values are authoritative.
+- Default timezone is Asia/Kolkata.
+- Always calculate relative dates from CURRENT DATE.
+- Never use dates from previous executions, examples, memory, or training data.
+- "today" means CURRENT DATE.
+- "tomorrow" means CURRENT DATE + 1 calendar day.
+- "yesterday" means CURRENT DATE - 1 calendar day.
+- Convert natural-language dates and times into exact calendar date/time values.
+- If a start time is provided without an end time or duration, assume 1 hour.
+- Do not guess missing dates or times.
+
+CALENDAR RULES:
+
+- Never invent event IDs.
+- Never invent calendar data.
+- Never create, update, or delete an event without using the appropriate calendar tool.
+- Never claim an operation succeeded unless the calendar tool succeeded.
+- Ask the user for missing required information.
+- Keep responses short and suitable for spoken output.
+
+For relative dates, perform the calculation using the CURRENT DATE supplied in the user message.
+```
+
+### 3. Google Calendar Tools Configuration
+
+| Tool | Resource & Operation | Role and Key Configuration | Detailed Reference |
+|:---|:---|:---|:---|
+| **Create Event** | Event -> Create | Creates a new event in the user's Google Calendar with agent-derived start/end times and title. | [`docs/n8n-setup/create-event-tool.md`](docs/n8n-setup/create-event-tool.md) |
+| **Search Events** | Event -> Get Many | Searches events within date/time ranges in Asia/Kolkata timezone. Critical prerequisite to retrieve verified Event IDs before updating or deleting. | [`docs/n8n-setup/search-events-tool.md`](docs/n8n-setup/search-events-tool.md) |
+| **Update Event** | Event -> Update | Modifies existing event fields (start, end, summary). Explicitly configured to require verified Event IDs from search. | [`docs/n8n-setup/update-event-tool.md`](docs/n8n-setup/update-event-tool.md) |
+| **Delete Event** | Event -> Delete | Permanently removes events. Strictly requires resolving the real Event ID via search prior to deletion. | [`docs/n8n-setup/delete-event-tool.md`](docs/n8n-setup/delete-event-tool.md) |
 
 ---
 
@@ -192,9 +261,19 @@ voxcal/
 │   ├── .env.example                 # n8n environment variables
 │   └── README.md                    # n8n installation and setup guide
 ├── docs/
-│   └── assets/
-│       ├── architecture.svg         # High-resolution vector architecture diagram
-│       └── n8n-workflow-placeholder.svg # Visual placeholder for n8n workflow screenshot
+│   ├── assets/
+│   │   ├── architecture.png         # System architecture diagram
+│   │   ├── architecture.svg         # High-resolution vector architecture diagram
+│   │   ├── workflow.png             # n8n workflow canvas screenshot
+│   │   └── n8n-workflow-placeholder.svg # Visual placeholder for n8n workflow
+│   └── n8n-setup/                   # Detailed n8n prompt & tool setup guides
+│       ├── README.md                # n8n setup index
+│       ├── user-prompt.md           # Dynamic user message template
+│       ├── system-prompt.md         # Agent system prompt & rules
+│       ├── create-event-tool.md     # Create event tool configuration
+│       ├── search-events-tool.md    # Search events tool configuration
+│       ├── update-event-tool.md     # Update event tool configuration
+│       └── delete-event-tool.md     # Delete event tool configuration
 ├── .gitignore                       # Ignores secrets.h, .env, and build artifacts
 ├── LICENSE                          # MIT License
 └── README.md                        # Project documentation (this file)
