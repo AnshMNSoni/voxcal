@@ -51,7 +51,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Forward JSON payload to n8n
             print("\n[n8n] Sending request...")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=240.0) as client:
                 try:
                     resp = await client.post(
                         N8N_WEBHOOK_URL,
