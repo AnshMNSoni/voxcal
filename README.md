@@ -1,4 +1,4 @@
-# VoxCal — Voice-Controlled Calendar & Task Assistant
+# VoxCal - Voice Controlled Calendar & Task Assistant
 
 <div align="center">
 
