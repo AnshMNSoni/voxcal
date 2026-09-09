@@ -43,19 +43,17 @@
 
 **VoxCal** transforms how you interact with your calendar and tasks. By combining low-cost, dedicated edge hardware (**ESP32**) with an autonomous reasoning engine (**n8n ReAct Agent** powered by Gemini or Groq LLMs), VoxCal enables natural voice control over your schedule without relying on locked-down proprietary voice assistants.
 
-- 🎙️ **Voice & Hardware Driven**: Edge capture via I2S microphone, audio processing on ESP32, and speech feedback through an amplifier and speaker.
-- 🌐 **Robust WebSocket Pipeline**: Bi-directional, persistent connection between the ESP32 and a local FastAPI Gateway for real-time streaming and fast responses.
-- 🧠 **Autonomous ReAct Agent**: Employs reasoning and acting (Thought ➔ Action ➔ Observation) loops in n8n to parse natural language, resolve relative times ("tomorrow at 3 PM"), and invoke calendar tools dynamically.
-- 📅 **Complete Calendar CRUD**: Autonomous tools to **Create**, **Read/Query**, **Update**, and **Delete** tasks and calendar events.
-- 🔒 **Privacy & Security First**: Credentials are kept in `.gitignore`'d `secrets.h` and `.env` files, keeping your network credentials safe.
+- **Voice & Hardware Driven**: Edge capture via I2S microphone, audio processing on ESP32, and speech feedback through an amplifier and speaker.
+- **Robust WebSocket Pipeline**: Bi-directional, persistent connection between the ESP32 and a local FastAPI Gateway for real-time streaming and fast responses.
+- **Autonomous ReAct Agent**: Employs reasoning and acting (Thought ➔ Action ➔ Observation) loops in n8n to parse natural language, resolve relative times ("tomorrow at 3 PM"), and invoke calendar tools dynamically.
+- **Complete Calendar CRUD**: Autonomous tools to **Create**, **Read/Query**, **Update**, and **Delete** tasks and calendar events.
+- **Privacy & Security First**: Credentials are kept in `.gitignore`'d `secrets.h` and `.env` files, keeping your network credentials safe.
 
 ---
 
 ## System Architecture
 
 <div align="center">
-
-![VoxCal System Architecture](docs/assets/architecture.png)
 
 </div>
 
