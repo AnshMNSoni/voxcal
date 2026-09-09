@@ -163,7 +163,7 @@ Below is the workflow structure orchestrating the incoming Webhook trigger, ReAc
 > [!TIP]
 > **Workflow Components in n8n**:
 > 1. **Webhook Trigger**: Receives `POST` payloads from the Python Gateway at `/webhook/voxcal/test`.
-> 2. **AI Agent (ReAct)**: Configured with Gemini 1.5 Flash/Pro or Groq LLaMA 3.3 70B as the reasoning brain.
+> 2. **AI Agent (ReAct)**: Configured with Gemini 3.6 Flash as main brain along with Groq openai/gpt-oss-20b as the fallback brain.
 > 3. **Calendar Tools**: Custom tool nodes configured for Create Event, Search Events, Update Event, and Delete Event.
 > 4. **Respond to Webhook**: Emits formatted JSON containing the response text back to the Gateway.
 
