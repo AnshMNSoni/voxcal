@@ -35,7 +35,7 @@ const uint16_t GATEWAY_PORT = 8000;
 // =====================================================
 // Audio Settings
 // =====================================================
-#define RECORD_SECONDS 3
+#define RECORD_SECONDS 5
 #define SAMPLE_COUNT   (SAMPLE_RATE * RECORD_SECONDS)
 
 int16_t* recording;
@@ -114,7 +114,7 @@ void enableSpeaker() {
 // =====================================================
 void recordAudio() {
   enableMic();
-  Serial.println("\n>>> RECORDING: Speak now (3 seconds)... <<<");
+  Serial.printf("\n>>> RECORDING: Speak now (%d seconds)... <<<\n", RECORD_SECONDS);
   delay(50);
   i2s_zero_dma_buffer(I2S_PORT);
 
@@ -361,8 +361,15 @@ void setup() {
   Serial.println(" VoxCal Mic → STT → Speaker Test");
   Serial.println("==========================================");
 
-  // Allocate recording buffer
-  recording = (int16_t*)malloc(SAMPLE_COUNT * sizeof(int16_t));
+  // Allocate recording buffer (160 KB for 5s @ 16kHz 16-bit mono)
+  #if defined(BOARD_HAS_PSRAM)
+  if (psramFound()) {
+    recording = (int16_t*)ps_malloc(SAMPLE_COUNT * sizeof(int16_t));
+  }
+  #endif
+  if (!recording) {
+    recording = (int16_t*)malloc(SAMPLE_COUNT * sizeof(int16_t));
+  }
   if (!recording) {
     Serial.println("ERROR: Not enough memory!");
     while (1);
