@@ -64,40 +64,40 @@ Key capabilities:
 ```mermaid
 flowchart TD
     subgraph EdgeHardware["ESP32 Edge Hardware"]
-        MIC["INMP441 MEMS Mic<br/>(I2S RX Master, 32-bit)"]
-        SPK["MAX98357A + Speaker<br/>(I2S TX Master, 16-bit)"]
-        ESP["ESP32 Microcontroller<br/>(Dynamic I2S Port 0 Sharing)"]
+        MIC["INMP441 MEMS Mic<br/>32-bit I2S RX Master"]
+        SPK["MAX98357A and Speaker<br/>16-bit I2S TX Master"]
+        ESP["ESP32 Microcontroller<br/>Dynamic I2S Port 0"]
         
-        MIC -->|I2S Bus: GPIO 32, 33, 34| ESP
-        ESP -->|I2S Bus: GPIO 26, 25, 22| SPK
+        MIC -->|"I2S Bus: GPIO 32, 33, 34"| ESP
+        ESP -->|"I2S Bus: GPIO 26, 25, 22"| SPK
     end
 
-    subgraph LocalGateway["FastAPI Local Gateway (PC / Server)"]
-        GW["FastAPI Service<br/>(server.py)"]
-        STT["STT Engine<br/>(SpeechRecognition + Auto-Gain)"]
-        TTS["TTS Engine<br/>(pyttsx3 PCM Synthesizer)"]
+    subgraph LocalGateway["FastAPI Local Gateway"]
+        GW["FastAPI Service<br/>server.py"]
+        STT["STT Engine<br/>SpeechRecognition + Auto-Gain"]
+        TTS["TTS Engine<br/>pyttsx3 PCM Synthesizer"]
         
         GW --- STT
         GW --- TTS
     end
 
-    subgraph CloudAutomation["Automation & Reasoning Layer"]
-        N8N["n8n Workflow Engine<br/>(ReAct AI Agent)"]
-        LLM["LLM Reasoning<br/>(Gemini / Groq)"]
-        CAL["Google Calendar API<br/>(Create, Read, Update, Delete)"]
+    subgraph CloudAutomation["Automation and Reasoning Layer"]
+        N8N["n8n Workflow Engine<br/>ReAct AI Agent"]
+        LLM["LLM Reasoning<br/>Gemini / Groq"]
+        CAL["Google Calendar API<br/>Create, Read, Update, Delete"]
         
         N8N --- LLM
         N8N --- CAL
     end
 
-    ESP -->|HTTP POST /transcribe (Raw PCM)| GW
-    GW -->|Transcribed Text| ESP
-    ESP -->|WebSocket Command JSON| GW
-    GW -->|HTTP POST Webhook| N8N
-    N8N -->|Action Result JSON| GW
-    GW -->|WebSocket Response JSON| ESP
-    ESP -->|HTTP GET /speak (Stream Audio)| GW
-    GW -->|16kHz 16-bit Mono PCM Stream| ESP
+    ESP -->|"HTTP POST /transcribe: Raw PCM"| GW
+    GW -->|"Transcribed Text"| ESP
+    ESP -->|"WebSocket Command JSON"| GW
+    GW -->|"HTTP POST Webhook"| N8N
+    N8N -->|"Action Result JSON"| GW
+    GW -->|"WebSocket Response JSON"| ESP
+    ESP -->|"HTTP GET /speak: Stream Audio"| GW
+    GW -->|"16kHz 16-bit Mono PCM Stream"| ESP
 ```
 
 ---
