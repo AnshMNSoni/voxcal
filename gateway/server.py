@@ -59,13 +59,33 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps(error_response))
                 continue
 
-            # Forward JSON payload to n8n
-            print("\n[n8n] Sending request...")
+            user_command = payload.get("message", "")
+            print("\n" + "=" * 60)
+            print(f"[WebSocket] Voice/Text Command Received from ESP32:")
+            print(f"  Command: \"{user_command}\"")
+            print(f"  Device:  {payload.get('device_id', 'unknown')}")
+            print("=" * 60)
+
+            # Inject authoritative date, time, and timezone metadata for n8n ReAct Agent
+            import datetime
+            now = datetime.datetime.now()
+            n8n_payload = {
+                "body": payload,
+                "current_date": now.strftime("%Y-%m-%d"),
+                "current_datetime": now.strftime("%Y-%m-%d %H:%M:%S"),
+                "timezone": os.getenv("TIMEZONE", "Asia/Kolkata"),
+                "message": user_command,
+                "type": payload.get("type", "command"),
+                "device_id": payload.get("device_id", "esp32-01")
+            }
+
+            # Forward payload to n8n ReAct Agent webhook
+            print(f"\n[n8n] Forwarding to ReAct Agent at: {N8N_WEBHOOK_URL}")
             async with httpx.AsyncClient(timeout=240.0) as client:
                 try:
                     resp = await client.post(
                         N8N_WEBHOOK_URL,
-                        json=payload,
+                        json=n8n_payload,
                         headers={"Content-Type": "application/json"}
                     )
                     
@@ -74,20 +94,35 @@ async def websocket_endpoint(websocket: WebSocket):
                         response_str = json.dumps(n8n_data)
                     except Exception:
                         response_str = resp.text
-                        n8n_data = {"raw_response": response_str, "status_code": resp.status_code}
+                        n8n_data = {"status": "success", "message": response_str, "status_code": resp.status_code}
 
-                    print(f"[n8n] Response:\n{response_str}")
+                    print(f"[n8n] ReAct Agent executed successfully!")
+                    print(f"[n8n] Raw Response: {response_str}")
+
+                    # Extract spoken confirmation message
+                    if isinstance(n8n_data, list) and len(n8n_data) > 0 and isinstance(n8n_data[0], dict):
+                        n8n_data = n8n_data[0]
+
+                    agent_msg = ""
+                    if isinstance(n8n_data, dict):
+                        agent_msg = n8n_data.get("message") or n8n_data.get("output") or n8n_data.get("text") or ""
+                        if not agent_msg and "raw_response" in n8n_data:
+                            agent_msg = str(n8n_data["raw_response"])
+                        if not n8n_data.get("message"):
+                            n8n_data["message"] = agent_msg
+
+                    print(f"[n8n] Agent Spoken Response: \"{agent_msg}\"")
 
                 except httpx.RequestError as exc:
-                    print(f"[n8n] HTTP Request failed: {exc}")
+                    print(f"[n8n] ERROR: Failed to reach n8n webhook: {exc}")
                     n8n_data = {
                         "status": "error",
-                        "message": f"Failed to reach n8n webhook: {str(exc)}",
+                        "message": f"Could not connect to n8n workflow. Make sure Docker is running on port 5678.",
                         "source": "gateway"
                     }
 
-            # Return response back to ESP32 over WebSocket
-            print("[WebSocket] Sending response to ESP32...")
+            # Send response back to ESP32 over WebSocket
+            print("\n[WebSocket] Sending agent response back to ESP32 for speaker playback...")
             await websocket.send_text(json.dumps(n8n_data))
             print("[WebSocket] Response sent successfully.\n")
 
