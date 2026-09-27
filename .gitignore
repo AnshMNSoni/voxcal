@@ -158,6 +158,8 @@ env.bak/
 venv.bak/
 secrets.h
 **/secrets.h
+*.wav
+debug_mic.wav
 
 # Spyder project settings
 .spyderproject
