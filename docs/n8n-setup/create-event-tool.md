@@ -1,30 +1,73 @@
-# Google Calendar - Create Event Tool Configuration
+﻿# Calendar Worker — CREATE Branch
 
 ## Overview
 
-The Create Event tool enables the n8n AI Agent to schedule and persist new events in the user's Google Calendar.
+The **create** action routes through Switch output index `0` directly to the **Create an event**
+Google Calendar node. No search or lookup is performed before creation.
 
-## n8n Node Configuration
+This is a key architectural invariant: Create must not perform a prior event search, because no
+existing event needs to be located. The Switch ensures Create bypasses all If/Get Many nodes.
 
-- **Node Type**: Google Calendar Tool
-- **Resource**: `Event`
-- **Operation**: `Create`
-- **Connection**: Connected as a Tool to the AI Agent node
+---
 
-## Tool Purpose & Documentation
+## Node Chain
 
-Create a new event in the user's Google Calendar when the user requests a calendar event to be created.
+```
+Switch (output 0)
+  └─► Create an event  [Google Calendar, Create operation]
+```
 
-The AI Agent automatically provides the structured event details derived from the user request, including:
-- **Title / Summary**: Event name or subject.
-- **Start Time**: ISO 8601 formatted date-time string anchored to the authoritative current date and timezone.
-- **End Time**: Calculated end timestamp (defaults to 1 hour duration if not specified by the user).
-- **Calendar ID**: Target calendar (typically `primary`).
+---
+
+## n8n Node Configuration (from workflow export)
+
+**Node name:** `Create an event`  
+**Type:** `n8n-nodes-base.googleCalendar`  
+**Operation:** `Create` (default)
+
+| Parameter | n8n Expression | Description |
+|:---|:---|:---|
+| Calendar | `anshsoni702@gmail.com` (list mode) | Target Google Calendar |
+| Start | `={{ $('When Executed by Another Workflow').first().json.startTime }}` | Absolute ISO 8601 start time from trigger |
+| End | `={{ $('When Executed by Another Workflow').first().json.endTime }}` | Absolute ISO 8601 end time from trigger |
+| Summary | `={{ $('When Executed by Another Workflow').first().json.title }}` | Event title from trigger |
+
+> **Important:** Start and End are set to **explicit expressions referencing the Worker trigger**.
+> If these fields are left empty or unset, the Google Calendar API (and n8n's default behaviour)
+> may fall back to the current time, creating an event at the wrong time. Always supply explicit
+> Start and End values.
+
+---
+
+## Input Contract for CREATE
+
+The Main AI Agent sends the following fields to Calendar Worker for a create operation:
+
+| Field | Required | Value |
+|:---|:---|:---|
+| `action` | ✅ | `"create"` |
+| `title` | ✅ | Event title (e.g. `"Team meeting"`) |
+| `startTime` | ✅ | Absolute ISO 8601 (e.g. `"2026-09-30T10:00:00+05:30"`) |
+| `endTime` | ✅ | Absolute ISO 8601 (e.g. `"2026-09-30T11:00:00+05:30"`) |
+| `eventId` | ✅ | `""` (empty — event does not exist yet) |
+| `originalStartTime` | — | Not required for create |
+| `originalEndTime` | — | Not required for create |
+
+---
 
 ## Agent Interaction Workflow
 
-1. The user issues a scheduling request (e.g., "Schedule a sprint review tomorrow at 3 PM").
-2. The agent calculates the exact date and start/end timestamps based on `CURRENT DATE` and `TIMEZONE`.
-3. The agent calls the Create Event tool with the structured parameters.
-4. The tool executes the Google Calendar API call and returns the newly created event object and unique Event ID.
-5. The agent formulates a spoken confirmation string for the ESP32.
+1. User says: *"Schedule a Team meeting tomorrow at 10 AM."*
+2. AI Agent resolves "tomorrow" against `current_date` → `2026-09-30T10:00:00+05:30`
+3. AI Agent calls Calendar Worker with `action=create`, `title="Team meeting"`,
+   `startTime=2026-09-30T10:00:00+05:30`, `endTime=2026-09-30T11:00:00+05:30`, `eventId=""`
+4. Calendar Worker Switch routes to output 0 → **Create an event**
+5. Google Calendar API creates the event and returns the new event object (including real event ID)
+6. Calendar Worker returns result to Main Agent
+7. Main Agent responds: *"Team meeting scheduled for tomorrow at 10 AM."*
+
+---
+
+## Verified Status
+
+Create was **successfully tested** in the current development workflow.

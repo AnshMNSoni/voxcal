@@ -1,42 +1,101 @@
-# Google Calendar - Search Events Tool Configuration
+﻿# Calendar Worker — SEARCH Branch
 
 ## Overview
 
-The Search Events tool allows the AI Agent to query scheduled calendar events within a specified date and time window. It serves two critical functions:
-1. Answering user schedule inquiries (e.g., "What do I have scheduled for today?").
-2. Resolving event names to real Google Calendar Event IDs prior to updating or deleting events.
+The **search** action routes through Switch output index `1` to the **Get many events1** Google
+Calendar node. Search is independent from the Update and Delete branches; it does not share the
+Update event-ID resolution logic.
 
-## n8n Node Configuration
+---
 
-- **Node Type**: Google Calendar Tool
-- **Resource**: `Event`
-- **Operation**: `Get Many` / `Search`
-- **Connection**: Connected as a Tool to the AI Agent node
+## Node Chain
 
-## Tool Description
-
-```text
-Search the user's Google Calendar for events within a specific date/time range. Use this tool when the user asks what events are scheduled on a particular day or time period. Always search the requested date range in Asia/Kolkata unless the user specifies another timezone.
+```
+Switch (output 1)
+  └─► Get many events1  [Google Calendar, Get Many operation]
+        └─► Code in JavaScript  [maps raw events to id/title/start/end]
+              └─► Edit Fields1  [passthrough — no additional field overrides]
 ```
 
-## Prerequisite for Update and Delete Workflows
+---
 
-When users interact via voice, they refer to meetings naturally rather than providing technical IDs:
+## n8n Node Configuration (from workflow export)
 
-```text
-User Request: "Delete my meeting tomorrow"
-      |
-      v
-Search Calendar Events (Find events on target date)
-      |
-      v
-Match Event by Title / Description
-      |
-      v
-Retrieve Genuine Event ID (e.g. "ev_982401")
-      |
-      v
-Execute Update Event or Delete Event Tool
+### Get many events1
+
+**Node name:** `Get many events1`  
+**Type:** `n8n-nodes-base.googleCalendar`  
+**Operation:** `getAll`
+
+| Parameter | n8n Expression | Description |
+|:---|:---|:---|
+| Calendar | `anshsoni702@gmail.com` (list mode) | Target Google Calendar |
+| Limit | `10` | Maximum events returned |
+| Time Min (`timeMin`) | `={{$json.startTime}}` | Search window start (from Worker trigger via Switch) |
+| Time Max (`timeMax`) | `={{$json.endTime}}` | Search window end |
+
+> **Note:** `$json.startTime` / `$json.endTime` here refer to the node's input data (from the Switch),
+> which flows from the Worker trigger fields.
+
+---
+
+### Code in JavaScript (Search result mapper)
+
+This Code node normalises the raw Google Calendar event objects into a consistent shape:
+
+```javascript
+return $input.all().map(item => {
+  const e = item.json;
+
+  return {
+    json: {
+      id: e.id || "",
+      title: e.summary || "",
+      start: e.start?.dateTime || e.start?.date || "",
+      end: e.end?.dateTime || e.end?.date || ""
+    }
+  };
+});
 ```
 
-Without this search step, the agent would either fail or hallucinate an Event ID, which violates the strict calendar integrity rules.
+> Note: This Search mapper accepts both `dateTime` (timed events) and `date` (all-day events) for
+> broad search result display. This is distinct from the Update event-ID resolver, which only uses
+> `dateTime`.
+
+---
+
+### Edit Fields1
+
+A passthrough Set node (no additional field overrides) that passes the Code output forward.
+
+---
+
+## Input Contract for SEARCH
+
+| Field | Required | Value |
+|:---|:---|:---|
+| `action` | ✅ | `"search"` |
+| `title` | — | Optional title hint (not used for filtering in this branch) |
+| `startTime` | ✅ | Search window start (absolute ISO 8601) |
+| `endTime` | ✅ | Search window end (absolute ISO 8601) |
+| `eventId` | ✅ | `""` (not applicable for search) |
+| `originalStartTime` | — | Not used for search |
+| `originalEndTime` | — | Not used for search |
+
+---
+
+## Agent Interaction Workflow
+
+1. User says: *"What meetings do I have tomorrow?"*
+2. AI Agent resolves "tomorrow" → `2026-09-30`
+3. AI Agent calls Calendar Worker with `action=search`,
+   `startTime=2026-09-30T00:00:00+05:30`, `endTime=2026-09-30T23:59:59+05:30`
+4. Switch routes to output 1 → **Get many events1**
+5. Results are mapped by the Code node
+6. Main Agent reads the events and responds: *"Your Team meeting is tomorrow at 10 AM."*
+
+---
+
+## Verified Status
+
+Search was **successfully tested** in the current development workflow.
