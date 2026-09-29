@@ -138,10 +138,10 @@ Computes authoritative date/time fields from `$now` at webhook receipt:
 
 | Field | n8n Expression | Description |
 |:---|:---|:---|
-| `current_date` | `={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}` | Calendar date |
-| `current_datetime` | `={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd HH:mm:ss') }}` | Full datetime |
+| `current_date` | `{{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}` | Calendar date |
+| `current_datetime` | `{{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd HH:mm:ss') }}` | Full datetime |
 | `timezone` | `Asia/Kolkata` (literal) | Timezone label |
-| `body` | `={{ $json.body }}` | Original webhook body passthrough |
+| `body` | `{{ $json.body }}` | Original webhook body passthrough |
 
 ### AI Agent Node
 
@@ -197,9 +197,9 @@ n8n Switch in expression mode requires a numeric index. The action string is map
 
 `Switch(0)` → **Create an event** (Google Calendar Create). No pre-search.
 
-- Start: `={{ $('When Executed by Another Workflow').first().json.startTime }}`
-- End: `={{ $('When Executed by Another Workflow').first().json.endTime }}`
-- Summary: `={{ $('When Executed by Another Workflow').first().json.title }}`
+- Start: `{{ $('When Executed by Another Workflow').first().json.startTime }}`
+- End: `{{ $('When Executed by Another Workflow').first().json.endTime }}`
+- Summary: `{{ $('When Executed by Another Workflow').first().json.title }}`
 
 Start and End must be explicitly set — omitting them allows Google Calendar to fall back to current time.
 
@@ -209,7 +209,7 @@ Full docs: [`docs/n8n-setup/create-event-tool.md`](docs/n8n-setup/create-event-t
 
 `Switch(1)` → **Get many events1** → **Code in JavaScript** → **Edit Fields1** (passthrough)
 
-- `timeMin`: `={{$json.startTime}}` | `timeMax`: `={{$json.endTime}}` | Limit: 10
+- `timeMin`: `{{$json.startTime}}` | `timeMax`: `{{$json.endTime}}` | Limit: 10
 
 Full docs: [`docs/n8n-setup/search-events-tool.md`](docs/n8n-setup/search-events-tool.md)
 
@@ -567,8 +567,8 @@ Accepts `?text=...`, synthesises 16kHz 16-bit mono PCM via pyttsx3, streams to E
 ```text
 voxcal/
 ├── hardware/esp32/
-│   ├── main.ino                     # Main ESP32 firmware
-│   ├── secrets.h                    # Wi-Fi credentials (git-ignored)
+│   ├── main.ino                         # Main ESP32 firmware
+│   ├── secrets.h                        # Wi-Fi credentials (git-ignored)
 │   ├── secrets.h.example
 │   ├── speaker_test/
 │   │   ├── diagnose_speaker.ino
@@ -577,25 +577,25 @@ voxcal/
 │       ├── diagnose_mic.ino
 │       └── mic_test.ino
 ├── gateway/
-│   ├── server.py                    # FastAPI Gateway
+│   ├── server.py                        # FastAPI Gateway
 │   ├── requirements.txt
-│   ├── .env                         # (git-ignored)
+│   ├── .env                             # (git-ignored)
 │   ├── .env.example
 │   └── README.md
 ├── software/
-│   ├── docker-compose.yml           # n8n Docker setup
-│   ├── .env                         # (git-ignored)
+│   ├── docker-compose.yml               # n8n Docker setup
+│   ├── .env                             # (git-ignored)
 │   ├── .env.example
-│   ├── local_files/                 # Mounted in n8n at /data/shared
+│   ├── local_files/                     # Mounted in n8n at /data/shared
 │   └── README.md
 ├── docs/
-│   ├── assets/mainagent-workflow.png  # Main VoxCal workflow canvas screenshot
-│   ├── assets/subagent-workflow.png   # Calendar Worker subworkflow canvas screenshot
+│   ├── assets/mainagent-workflow.png    # Main VoxCal workflow canvas screenshot
+│   ├── assets/subagent-workflow.png     # Calendar Worker subworkflow canvas screenshot
 │   └── n8n-setup/
-│       ├── README.md                # Architecture index
-│       ├── system-prompt.md         # AI Agent system prompt (verbatim)
-│       ├── user-prompt.md           # User message template + Edit Fields
-│       ├── calendar-worker-tool.md  # Calendar Worker tool description (verbatim)
+│       ├── README.md                    # Architecture index
+│       ├── system-prompt.md             # AI Agent system prompt (verbatim)
+│       ├── user-prompt.md               # User message template + Edit Fields
+│       ├── calendar-worker-tool.md      # Calendar Worker tool description (verbatim)
 │       ├── calendar-worker-workflow.md  # Full Worker node documentation
 │       ├── create-event-tool.md
 │       ├── search-events-tool.md
