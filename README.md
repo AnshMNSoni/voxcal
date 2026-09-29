@@ -1,4 +1,4 @@
-﻿# VoxCal — Voice Controlled Calendar Assistant
+# VoxCal — Voice Controlled Calendar Assistant
 
 <div align="center">
 
@@ -589,7 +589,8 @@ voxcal/
 │   ├── local_files/                 # Mounted in n8n at /data/shared
 │   └── README.md
 ├── docs/
-│   ├── assets/workflow.png
+│   ├── assets/mainagent-workflow.png  # Main VoxCal workflow canvas screenshot
+│   ├── assets/subagent-workflow.png   # Calendar Worker subworkflow canvas screenshot
 │   └── n8n-setup/
 │       ├── README.md                # Architecture index
 │       ├── system-prompt.md         # AI Agent system prompt (verbatim)
@@ -676,7 +677,13 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
 
 ## n8n Workflow Canvas
 
-![VoxCal n8n Workflow Canvas](docs/assets/workflow.png)
+### Main Workflow (Voxcal)
+
+![VoxCal Main Agent Workflow Canvas](docs/assets/mainagent-workflow.png)
+
+### Calendar Worker Subworkflow
+
+![VoxCal Calendar Worker Subworkflow Canvas](docs/assets/subagent-workflow.png)
 
 ---
 
