@@ -1,4 +1,4 @@
-# VoxCal — Voice Controlled Calendar Assistant
+# VoxCal - Voice Controlled Calendar Assistant
 
 <div align="center">
 
@@ -45,6 +45,7 @@
 - [Repository Structure](#repository-structure)
 - [Quick Start Guide](#quick-start-guide)
 - [Configuration and Environment Variables](#configuration-and-environment-variables)
+- [Hardware Connection](#hardware-connection)
 - [n8n Workflow Canvas](#n8n-workflow-canvas)
 - [Recent Updates](#recent-updates)
 - [License](#license)
@@ -748,6 +749,10 @@ are stored in n8n's encrypted credential store (`voxcal_n8n_data` Docker volume)
 The Google Calendar account ID is configured inside n8n Worker nodes and not exposed in this repository.
 
 ---
+
+## Hardware Connection
+
+![Hardware Connection](docs/assets/voxcal-hardware.png)
 
 ## n8n Workflow Canvas
 
