@@ -23,6 +23,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Live Demo](#live-demo)
 - [Key Features](#key-features)
 - [Current System Architecture](#current-system-architecture)
 - [Main n8n Workflow](#main-n8n-workflow)
@@ -59,6 +60,14 @@ low-cost edge hardware (ESP32, INMP441 MEMS microphone, MAX98357A I2S amplifier)
 autonomous reasoning engine built on n8n, powered by Groq LLMs with dual-model failover,
 connected to Google Calendar via a two-layer workflow architecture: a conversational Main Agent
 (with per-device conversational memory) and a deterministic Calendar Worker subworkflow.
+
+---
+
+## Live Demo
+
+[![VoxCal Live Demo](https://img.youtube.com/vi/NLplkhMXXMI/maxresdefault.jpg)](https://youtu.be/NLplkhMXXMI)
+
+▶️ **[Watch the full VoxCal demo on YouTube](https://youtu.be/NLplkhMXXMI)**
 
 ---
 
