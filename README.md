@@ -6,7 +6,7 @@
 [![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B%20%2F%20Arduino-00979D?style=for-the-badge)](https://www.arduino.cc/)
 [![Gateway](https://img.shields.io/badge/Gateway-FastAPI%20%7C%20Python%203.10%2B-009688?style=for-the-badge)](https://fastapi.tiangolo.com/)
 [![Automation](https://img.shields.io/badge/Agent-n8n%20Workflow-EA4B71?style=for-the-badge)](https://n8n.io/)
-[![LLM Reasoning](https://img.shields.io/badge/LLM-Gemini%20%7C%20Groq-4285F4?style=for-the-badge)](https://ai.google.dev/)
+[![LLM Reasoning](https://img.shields.io/badge/LLM-Groq%20(Dual%20Model)-F55036?style=for-the-badge)](https://groq.com/)
 [![Protocol](https://img.shields.io/badge/Protocol-WebSocket%20%26%20REST-2563EB?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 [![Testing Status](https://img.shields.io/badge/Status-CRUD%20Verified-22C55E?style=for-the-badge)](https://github.com/AnshMNSoni/voxcal)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
@@ -26,6 +26,7 @@
 - [Key Features](#key-features)
 - [Current System Architecture](#current-system-architecture)
 - [Main n8n Workflow](#main-n8n-workflow)
+- [Conversational Memory](#conversational-memory)
 - [Calendar Worker Architecture](#calendar-worker-architecture)
 - [End-to-End Request Lifecycle](#end-to-end-request-lifecycle)
 - [AI Agent System Prompt](#ai-agent-system-prompt)
@@ -45,6 +46,7 @@
 - [Quick Start Guide](#quick-start-guide)
 - [Configuration and Environment Variables](#configuration-and-environment-variables)
 - [n8n Workflow Canvas](#n8n-workflow-canvas)
+- [Recent Updates](#recent-updates)
 - [License](#license)
 
 ---
@@ -53,9 +55,9 @@
 
 VoxCal is a dedicated edge-to-cloud voice assistant for calendar and task automation. It combines
 low-cost edge hardware (ESP32, INMP441 MEMS microphone, MAX98357A I2S amplifier) with an
-autonomous reasoning engine built on n8n, powered by Gemini and Groq LLMs, connected to
-Google Calendar via a two-layer workflow architecture: a conversational Main Agent and a
-deterministic Calendar Worker subworkflow.
+autonomous reasoning engine built on n8n, powered by Groq LLMs with dual-model failover,
+connected to Google Calendar via a two-layer workflow architecture: a conversational Main Agent
+(with per-device conversational memory) and a deterministic Calendar Worker subworkflow.
 
 ---
 
@@ -65,7 +67,8 @@ deterministic Calendar Worker subworkflow.
 - **Hardware voice feedback**: Class D 3W I2S digital-to-analog amplifier and speaker.
 - **High-efficiency gateway**: FastAPI asynchronous bridge providing STT, TTS, and WebSocket routing.
 - **Two-layer n8n architecture**: Main AI Agent interprets natural language; Calendar Worker executes CRUD deterministically.
-- **Gemini 3.6 Flash primary model** (`models/gemini-3.6-flash`) with Groq `openai/gpt-oss-20b` fallback.
+- **Groq dual-model**: `Groq Chat Model` (primary) with `Groq Chat Fallback Model` for automatic failover.
+- **Conversational memory**: n8n Simple Memory with `device_id`-based sessions for multi-turn follow-up handling.
 - **Authoritative date/time injection**: n8n Edit Fields computes current date/time from `$now` at execution, preventing model date drift.
 - **Event-ID safety**: Never invents event IDs; resolves real IDs before update/delete.
 - **Event-move support**: Distinguishes original event location (`originalStartTime`) from new destination (`startTime`).
@@ -94,9 +97,11 @@ flowchart TD
     subgraph MainN8N["n8n Main Workflow — Voxcal"]
         WH["Webhook POST /webhook/voxcal/test"]
         EF["Edit Fields\ncurrent_date, current_datetime, timezone from $now"]
-        AG["AI Agent\nGemini 3.6 Flash + Groq fallback"]
+        AG["AI Agent\nGroq Chat Model (primary)\nGroq Chat Fallback Model"]
+        MEM["Simple Memory\nsession = device_id"]
         RW["Respond to Webhook"]
         WH --> EF --> AG --> RW
+        MEM -.->|"memory"| AG
     end
     subgraph WorkerN8N["n8n Calendar Worker"]
         SW["Switch\ncreate=0/search=1/update=2/delete=3"]
@@ -124,12 +129,16 @@ flowchart TD
 
 ## Main n8n Workflow
 
-**Name:** `Voxcal` | **ID:** `jVxIMtua9iTDiASX` | **Version:** v0.1.54
+**Name:** `Voxcal` | **ID:** `jVxIMtua9iTDiASX`
 
 ```
 Webhook  →  Edit Fields  →  AI Agent  →  Respond to Webhook
-                                ↕ (tool)
-                      Call 'Calendar Worker'
+                                │
+                    ┌───────────┼───────────┐
+                    │           │           │
+              Groq Models   Simple     Calendar
+             (Primary +    Memory     Worker
+              Fallback)   (device_id)  (tool)
 ```
 
 ### Edit Fields Node
@@ -145,17 +154,82 @@ Computes authoritative date/time fields from `$now` at webhook receipt:
 
 ### AI Agent Node
 
-- **Primary model**: `models/gemini-3.6-flash` (node: `Gemini-3.6-flash`)
-- **Fallback model**: `openai/gpt-oss-20b` via Groq (node: `Groq Chat Model`)
+- **Primary model**: Groq Chat Model (node: `Groq Chat Model`)
+- **Fallback model**: Groq Chat Fallback Model (node: `Groq Chat Fallback Model`)
+- **Memory**: Simple Memory (node: `Simple Memory`) — session keyed by `device_id`
 - **Tool**: `Call 'Calendar Worker'` — invokes the Calendar Worker subworkflow
 
-The agent resolves natural language to a structured action contract and calls Calendar Worker.
+The agent resolves natural language to a structured action contract, maintains conversational
+context across multi-turn requests via Simple Memory, and calls Calendar Worker.
 
 ### Respond to Webhook
 
 Returns:
 ```json
 { "status": "success", "message": "<agent output>", "source": "n8n" }
+```
+
+---
+
+## Conversational Memory
+
+The AI Agent uses **n8n Simple Memory** connected to its Memory input to maintain conversational
+context across multi-turn interactions.
+
+### Session Management
+
+- **Session ID expression**: `{{ $json.body.device_id }}`
+- Same `device_id` → same conversational context (turns share memory)
+- Different `device_id` → isolated conversational context (separate sessions)
+
+This means each ESP32 device maintains its own independent conversation history with the agent.
+
+### Multi-Turn Follow-Up Support
+
+With conversational memory, the agent can handle incomplete follow-up requests by referencing
+the previous turn's context:
+
+| Turn | User says | Agent understands |
+|:---|:---|:---|
+| 1 | "Create a meeting with Ansh tomorrow." | Creates event — but needs a time |
+| 2 | "At 6 PM." | Resolves against previous turn → schedules tomorrow at 6 PM |
+
+Other supported follow-up patterns:
+
+- `"at 6 PM"` — sets time for previously mentioned event
+- `"tomorrow"` — sets date for previously mentioned event
+- `"from 3 to 4"` — sets time range for previously mentioned event
+- `"make it 5"` — updates a previously created/discussed event's time
+- `"delete it"` — deletes the event from the previous turn
+- `"move it to Friday"` — reschedules the previously discussed event
+
+### Memory vs. Calendar Source of Truth
+
+- **Memory** is used only for conversational context (what was discussed in previous turns).
+- **Google Calendar** remains the authoritative source of truth for actual event data.
+- The agent never relies on memory alone to confirm an event exists — it uses Calendar Worker
+  to verify against the real calendar.
+
+### Session Architecture
+
+```text
+ESP32
+  │
+  │ device_id
+  ▼
+Webhook
+  │
+  ▼
+AI Agent
+  │
+  ├── Simple Memory
+  │      └── Session ID = device_id
+  │
+  └── Calendar Worker
+         ├── Create
+         ├── Search
+         ├── Update
+         └── Delete
 ```
 
 ---
@@ -684,6 +758,62 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
 ### Calendar Worker Subworkflow
 
 ![VoxCal Calendar Worker Subworkflow Canvas](docs/assets/subagent-workflow.png)
+
+---
+
+## Recent Updates
+
+### Conversational Memory
+
+- Added **n8n Simple Memory** to the AI Agent.
+- Connected Simple Memory to the AI Agent's **Memory** input.
+- Session ID is dynamically generated from: `{{ $json.body.device_id }}`
+- Same `device_id` → same conversational context.
+- Different `device_id` → separate conversational context.
+- Enables multi-turn requests such as:
+  - "Create a meeting with Ansh tomorrow."
+  - "At 6 PM."
+- Memory is used only for previously established conversational context.
+- Google Calendar remains the source of truth for calendar events.
+
+### AI Agent Improvements
+
+- Added conversational context handling.
+- Added follow-up request handling:
+  - "at 6 PM"
+  - "tomorrow"
+  - "from 3 to 4"
+  - "make it 5"
+  - "delete it"
+  - "move it to Friday"
+- Added missing date/time validation.
+- Prevented the Agent from guessing missing date/time information.
+- Added relative date resolution before calling Calendar Worker.
+- Relative dates are converted to absolute ISO 8601 timestamps.
+- Added event ID validation.
+- Prevented fabricated event IDs.
+- Added update/delete event resolution through Calendar Worker.
+
+### Calendar Worker Improvements
+
+- Maintained deterministic calendar execution through Calendar Worker.
+- AI Agent handles natural-language interpretation.
+- Calendar Worker handles actual calendar operations.
+- Create, Search, Update, and Delete remain separate Worker branches.
+- Added handling for required `endTime` during event creation.
+- Prevented empty `endTime` values from being sent to Google Calendar.
+
+### Response Handling
+
+- Added strict final-response rules.
+- AI Agent returns only the user-facing response after a successful operation.
+- Prevented exposure of:
+  - Tool calls
+  - Tool arguments
+  - JSON
+  - Internal reasoning
+  - n8n execution details
+- Responses are kept short and voice-friendly.
 
 ---
 
