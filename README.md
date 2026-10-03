@@ -1,6 +1,10 @@
 # VoxCal - Voice Controlled Calendar Assistant
 
 <div align="center">
+  <img src="docs/assets/voxcal-logo.png" alt="Project Logo" width="200"/>
+</div>
+
+<div align="center">
 
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-E7352C?style=for-the-badge)](https://www.espressif.com/)
 [![Firmware](https://img.shields.io/badge/Firmware-C%2B%2B%20%2F%20Arduino-00979D?style=for-the-badge)](https://www.arduino.cc/)
