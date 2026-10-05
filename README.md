@@ -87,6 +87,7 @@ connected to Google Calendar via a two-layer workflow architecture: a conversati
 - **Event-ID safety**: Never invents event IDs; resolves real IDs before update/delete.
 - **Event-move support**: Distinguishes original event location (`originalStartTime`) from new destination (`startTime`).
 - **Dynamic I2S time-sharing**: Eliminates hardware clock conflicts on a single I2S peripheral.
+- **Physical controls**: Push button (GPIO 27) triggers 5-second voice recording; Red LED (GPIO 14) indicates READY, Green LED (GPIO 13) indicates PLAYING.
 
 ---
 
@@ -97,9 +98,15 @@ flowchart TD
     subgraph EdgeHardware["ESP32 Edge Hardware"]
         MIC["INMP441 Mic\n32-bit I2S RX"]
         SPK["MAX98357A + Speaker\n16-bit I2S TX"]
+        BTN["Push Button\nGPIO 27 INPUT_PULLUP"]
+        RLED["Red LED\nGPIO 14 — READY"]
+        GLED["Green LED\nGPIO 13 — PLAYING"]
         ESP["ESP32\nDynamic I2S Port 0"]
         MIC -->|"GPIO 32,33,34"| ESP
         ESP -->|"GPIO 26,25,22"| SPK
+        BTN -->|"GPIO 27"| ESP
+        ESP -->|"GPIO 14"| RLED
+        ESP -->|"GPIO 13"| GLED
     end
     subgraph LocalGateway["FastAPI Local Gateway"]
         GW["server.py"]
@@ -355,15 +362,30 @@ Full docs: [`docs/n8n-setup/delete-event-tool.md`](docs/n8n-setup/delete-event-t
 
 ## End-to-End Request Lifecycle
 
-1. **Recording**: ESP32 captures 3s audio from INMP441 (`I2S_NUM_0` RX mode).
-2. **Transcription**: Raw PCM → `POST /transcribe` → Gateway STT → text returned to ESP32.
-3. **Command routing**: ESP32 sends WebSocket JSON → Gateway injects metadata → `POST /webhook/voxcal/test`.
-4. **n8n processing**:
+1. **READY state**: Red LED ON. Device waits for button press (GPIO 27, `INPUT_PULLUP`). Additional presses are ignored while busy.
+2. **RECORDING**: Button pressed → Red LED OFF, both LEDs OFF. ESP32 captures 5s audio from INMP441 (`I2S_NUM_0` RX mode).
+3. **Transcription**: Raw PCM → `POST /transcribe` → Gateway STT → text returned to ESP32.
+4. **PROCESSING**: ESP32 sends WebSocket JSON → Gateway injects metadata → `POST /webhook/voxcal/test`.
+5. **n8n processing**:
    - Edit Fields computes `current_date`, `current_datetime`, `timezone` from `$now`.
    - AI Agent resolves dates, calls Calendar Worker with structured action contract.
    - Calendar Worker routes via Switch, executes Google Calendar operation.
    - Respond to Webhook returns `{ status, message, source }`.
-5. **Speech output**: Gateway extracts `message` → pyttsx3 TTS → resample to 16kHz PCM → stream to ESP32 → MAX98357A speaker.
+6. **PLAYING**: Green LED ON. Gateway extracts `message` → pyttsx3 TTS → resample to 16kHz PCM → stream to ESP32 → MAX98357A speaker.
+7. **Return to READY**: Playback finishes → Green LED OFF → Red LED ON. Device accepts new button presses.
+
+### Device State Machine
+
+```text
+  ┌──────────────────────────────────────────────────┐
+  │                                                  │
+  ▼                                                  │
+READY ──button──► RECORDING ──► PROCESSING ──► PLAYING
+ 🔴                  ⚫              ⚫           🟢
+ Red ON          Both OFF        Both OFF      Green ON
+```
+
+> **Note:** Serial commands remain available for debugging, but pressing Enter with an empty input does not trigger recording.
 
 ---
 
@@ -587,6 +609,12 @@ Full analysis: [`docs/n8n-setup/efficiency-analysis.md`](docs/n8n-setup/efficien
 | **MAX98357A Amp** | DIN | GPIO 22 | Serial Data In |
 | **MAX98357A Amp** | GAIN | Unconnected | 9dB default |
 | **MAX98357A Amp** | SD_MODE | Unconnected | Stereo downmix |
+| **Push Button** | Terminal 1 | GPIO 27 | `INPUT_PULLUP` — press to record |
+| **Push Button** | Terminal 2 | GND | Other side to ground |
+| **Red LED** | Anode | GPIO 14 | READY indicator (via 330Ω resistor) |
+| **Red LED** | Cathode | GND | Ground |
+| **Green LED** | Anode | GPIO 13 | PLAYING indicator (via 330Ω resistor) |
+| **Green LED** | Cathode | GND | Ground |
 
 ### Dynamic I2S Port Architecture
 
@@ -832,6 +860,16 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
   - Internal reasoning
   - n8n execution details
 - Responses are kept short and voice-friendly.
+
+### Button & LED Controls
+
+- Added **push button on GPIO 27** (`INPUT_PULLUP`) to trigger 5-second voice recording.
+- Button presses are ignored while the device is busy (recording, processing, or playing).
+- Added **Red LED on GPIO 14** (via 330Ω resistor) — ON when device is in READY state.
+- Added **Green LED on GPIO 13** (via 330Ω resistor) — ON while response audio is playing.
+- Implemented device state machine: **READY → RECORDING → PROCESSING → PLAYING → READY**.
+- Empty Serial Monitor ENTER no longer triggers recording.
+- Serial commands remain available for debugging.
 
 ---
 
