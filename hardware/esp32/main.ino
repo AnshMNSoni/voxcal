@@ -30,7 +30,7 @@
 // VoxCal Button + LEDs
 // -----------------------------------------------------
 #define BUTTON_PIN     27
-#define RED_LED_PIN    14
+#define BLUE_LED_PIN    14
 #define GREEN_LED_PIN  13
 
 // =====================================================
@@ -40,15 +40,15 @@
 #if __has_include("secrets.h")
   #include "secrets.h"
 #else
-  const char* WIFI_SSID     = "Wi-Fi";
-  const char* WIFI_PASSWORD = "YOUR_PASSWORD";
+  const char* WIFI_SSID     = "WIFI_SSID";
+  const char* WIFI_PASSWORD = "WIFI_PASSWORD";
 #endif
 
 // Replace with your laptop's Wi-Fi / Hotspot IP address
-const char* GATEWAY_HOST = "192.168.137.1";
+const char* GATEWAY_HOST = "GATEWAY_HOST";
 const uint16_t GATEWAY_PORT = 8000;
 const char* GATEWAY_WS_PATH = "/ws";
-const char* DEVICE_ID = "esp32-01";
+const char* DEVICE_ID = "DEVICE_ID";
 
 // =====================================================
 // Audio & State Settings
@@ -124,25 +124,25 @@ void updateLEDs() {
 
     case STATE_READY:
       // Ready for user to press button
-      digitalWrite(RED_LED_PIN, HIGH);
+      digitalWrite(BLUE_LED_PIN, HIGH);
       digitalWrite(GREEN_LED_PIN, LOW);
       break;
 
     case STATE_RECORDING:
       // Recording user's voice
-      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(BLUE_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, LOW);
       break;
 
     case STATE_PROCESSING:
       // Waiting for Gateway / n8n response
-      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(BLUE_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, LOW);
       break;
 
     case STATE_PLAYING:
       // Playing final response
-      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(BLUE_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, HIGH);
       break;
   }
@@ -158,7 +158,7 @@ void setReadyState() {
 
   Serial.println();
   Serial.println("[VoxCal] READY");
-  Serial.println("[LED] RED ON");
+  Serial.println("[LED] BLUE ON");
   Serial.println("[Button] Press button to record.");
 }
 
@@ -171,7 +171,7 @@ void setRecordingState() {
   updateLEDs();
 
   Serial.println("[VoxCal] RECORDING");
-  Serial.println("[LED] RED OFF");
+  Serial.println("[LED] BLUE OFF");
 }
 
 // -----------------------------------------------------
@@ -183,7 +183,7 @@ void setProcessingState() {
   updateLEDs();
 
   Serial.println("[VoxCal] PROCESSING");
-  Serial.println("[LED] RED OFF / GREEN OFF");
+  Serial.println("[LED] BLUE OFF / GREEN OFF");
 }
 
 // -----------------------------------------------------
@@ -905,7 +905,7 @@ void webSocketEvent(
       );
 
       // Not ready if Gateway is unavailable
-      digitalWrite(RED_LED_PIN, LOW);
+      digitalWrite(BLUE_LED_PIN, LOW);
       digitalWrite(GREEN_LED_PIN, LOW);
 
       break;
@@ -1106,7 +1106,7 @@ void setup() {
   // ---------------------------------------------------
 
   pinMode(
-    RED_LED_PIN,
+    BLUE_LED_PIN,
     OUTPUT
   );
 
@@ -1117,7 +1117,7 @@ void setup() {
 
   // Start with LEDs OFF
   digitalWrite(
-    RED_LED_PIN,
+    BLUE_LED_PIN,
     LOW
   );
 
