@@ -724,6 +724,7 @@ voxcal/
 │   ├── local_files/                     # Mounted in n8n at /data/shared
 │   └── README.md
 ├── docs/
+│   ├── assets/hardware-prototype.jpg    # Physical hardware prototype photo
 │   ├── assets/mainagent-workflow.png    # Main VoxCal workflow canvas screenshot
 │   ├── assets/subagent-workflow.png     # Calendar Worker subworkflow canvas screenshot
 │   └── n8n-setup/
@@ -811,6 +812,18 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
 ---
 
 ## Hardware Connection
+
+### Hardware Prototype
+
+<div align="center">
+  <img src="docs/assets/hardware-prototype.jpg" alt="VoxCal Hardware Prototype" width="700"/>
+  <br>
+  <em>VoxCal physical hardware prototype featuring ESP32, INMP441 MEMS microphone, MAX98357A I2S amplifier, speaker, push button, and status LEDs.</em>
+</div>
+
+<br>
+
+### Wiring and Setup
 
 ![Hardware Connection](docs/assets/voxcal-hardware.png)
 
