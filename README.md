@@ -97,6 +97,8 @@ connected to Google Calendar via a two-layer workflow architecture: a conversati
 - **Groq dual-model**: `Groq Chat Model` (primary) with `Groq Chat Fallback Model` for automatic failover.
 - **Conversational memory**: n8n Simple Memory with `device_id`-based sessions for multi-turn follow-up handling.
 - **Authoritative date/time injection**: n8n Edit Fields computes current date/time from `$now` at execution, preventing model date drift.
+- **Past-date rejection**: Prevents scheduling, creating, or updating events to past dates or times relative to `current_datetime`.
+- **Pre-creation conflict detection**: Automatically checks for overlapping meetings before creating new events to prevent double-booking.
 - **Event-ID safety**: Never invents event IDs; resolves real IDs before update/delete.
 - **Event-move support**: Distinguishes original event location (`originalStartTime`) from new destination (`startTime`).
 - **Dynamic I2S time-sharing**: Eliminates hardware clock conflicts on a single I2S peripheral.
@@ -409,6 +411,8 @@ Full verbatim prompt: [`docs/n8n-setup/system-prompt.md`](docs/n8n-setup/system-
 Key rules (summarised):
 - Identity: VoxCal, voice calendar assistant.
 - Use supplied `current_date`/`current_datetime`/`timezone` as sole source of truth. Never use model's own date.
+- Past-date rejection: Never schedule, create, or update events into the past.
+- Pre-creation conflict check: Searches the target time range before creating an event to detect overlapping events and inform the user.
 - All calendar operations go through Calendar Worker only.
 - Resolve all relative dates to absolute ISO 8601 before calling Calendar Worker.
 - `eventId` must be a real ID or `""`. Never invented.
@@ -482,6 +486,8 @@ Full verbatim tool description: [`docs/n8n-setup/calendar-worker-tool.md`](docs/
 
 ## Error Handling and Safety Invariants
 
+- **Past-date rejection**: Requests with a `startTime` before `current_datetime` are rejected immediately without calling Calendar Worker.
+- **Conflict prevention**: Pre-creation search checks the time slot and warns the user if an event already exists instead of double-booking.
 - **Zero matches**: `Event not found: "<title>" at <time>` — agent reports failure to user.
 - **Multiple matches**: Explicit error thrown — agent asks user to disambiguate.
 - **Invented event IDs**: Prohibited by system prompt, tool description, and field hints.
@@ -852,6 +858,8 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
 - Added event ID validation.
 - Prevented fabricated event IDs.
 - Added update/delete event resolution through Calendar Worker.
+- Added past-date validation preventing creation or scheduling of meetings in the past.
+- Added pre-creation schedule conflict checking to prevent overlapping double-bookings.
 
 ### Calendar Worker Improvements
 
