@@ -305,13 +305,15 @@ n8n Switch in expression mode requires a numeric index. The action string is map
 
 ### CREATE Branch
 
-`Switch(0)` → **Create an event** (Google Calendar Create). No pre-search.
+`Switch(0)` → **Check Slot Availability** (`getAll`) → **Has Conflict?** (`If`)
+- **TRUE (Conflict detected)** → **Conflict Response** (`Edit Fields` returning `status: "conflict"` and existing event title).
+- **FALSE (Slot is free)** → **Create an event** (`Google Calendar Create`).
 
 - Start: `{{ $('When Executed by Another Workflow').first().json.startTime }}`
 - End: `{{ $('When Executed by Another Workflow').first().json.endTime }}`
 - Summary: `{{ $('When Executed by Another Workflow').first().json.title }}`
 
-Start and End must be explicitly set — omitting them allows Google Calendar to fall back to current time.
+Eliminates double-booking deterministically in a single step without extra conversational turns.
 
 Full docs: [`docs/n8n-setup/create-event-tool.md`](docs/n8n-setup/create-event-tool.md)
 
@@ -871,15 +873,18 @@ The Google Calendar account ID is configured inside n8n Worker nodes and not exp
 - Added event ID validation.
 - Prevented fabricated event IDs.
 - Added update/delete event resolution through Calendar Worker.
-- Added past-date validation preventing creation or scheduling of meetings in the past.
-- Added pre-creation schedule conflict checking to prevent overlapping double-bookings.
+- Added past-date validation: Immediately prevents scheduling or creating meetings for dates/times in the past.
+- Added conflict prevention: Blocks creation if an overlapping meeting already exists and informs the user.
+- Enhanced delete intent: Time is optional for deletion; users can delete by title and date without being asked for a time.
+- Enhanced reschedule/update intent: Allows updating events (e.g., "move Priyank tomorrow to 8 PM") without needing to restate the original time.
 
 ### Calendar Worker Improvements
 
 - Maintained deterministic calendar execution through Calendar Worker.
-- AI Agent handles natural-language interpretation.
-- Calendar Worker handles actual calendar operations.
-- Create, Search, Update, and Delete remain separate Worker branches.
+- Integrated deterministic conflict pre-checking directly on Switch Output 0 (`Check Slot Availability` → `Has Conflict?` → `Conflict Response` / `Create an event`).
+- Enhanced `Resolve Delete Event ID`: Removed strict 2-minute time constraints and enabled flexible case-insensitive title matching.
+- Enhanced `Resolve Update Event ID`: Removed strict millisecond equality and added fallback to `startTime` day in `Find Event for Update` for seamless single-turn moves.
+- Create, Search, Update, and Delete remain separate, robust Worker branches.
 - Added handling for required `endTime` during event creation.
 - Prevented empty `endTime` values from being sent to Google Calendar.
 
