@@ -2,7 +2,20 @@
 
 <div align="center">
   <img src="docs/assets/voxcal-logo.png" alt="Project Logo" width="200"/>
+
 </div>
+
+<div align="center">
+  <a href="https://peerlist.io/anshmnsoni/project/voxcal" target="_blank" rel="noreferrer">
+				<img
+					src="https://peerlist.io/api/v1/projects/embed/PRJHJKNLDJAJ68QO8CADB8PG7GOPBR?showUpvote=false&theme=dark"
+					alt="VoxCal"
+					style="width: auto; height: 72px;"
+				/>
+  </a>
+</div>
+
+<br>
 
 <div align="center">
 
@@ -19,7 +32,7 @@
   <b>An open-source, edge-to-cloud voice assistant that schedules, manages, and updates your calendar
   using ESP32 edge hardware, a local FastAPI Gateway, and a two-layer n8n workflow engine.</b>
 </p>
-
+      
 </div>
 
 ---
